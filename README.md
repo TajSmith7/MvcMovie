@@ -23,3 +23,15 @@ This is a simple **ASP.NET Core MVC web app** I built by following Microsoft’s
 1. Clone the repo to your machine.  
 2. Open the project in **Visual Studio**.  
 3. Run the app
+
+---
+## Design Notes
+
+To improve separation of concerns, I moved the CRUD logic out of the MVC controller and into a dedicated service class (MvcMovieService). This keeps the controller focused on handling HTTP requests/responses while the service encapsulates the business logic and data access coordination.
+
+I also registered MvcMovieService with the built-in Dependency Injection (DI) container, which makes it easier to maintain, test, and swap implementations in the future if needed. This design choice aligns with clean architecture principles by decoupling the controller from direct data operations.
+
+---
+## Testing
+
+A unit test project was added to validate the service layer. The tests use an in-memory database to simulate CRUD operations without requiring a real SQL Server instance. This allows the tests to run quickly and ensures that the MvcMovieService behaves correctly when adding, updating, retrieving, and deleting movies.
