@@ -31,6 +31,8 @@ To improve separation of concerns, I moved the CRUD logic out of the MVC control
 
 I also registered MvcMovieService with the built-in Dependency Injection (DI) container, which makes it easier to maintain, test, and swap implementations in the future if needed. This design choice aligns with clean architecture principles by decoupling the controller from direct data operations.
 
+I added routing so the url can be manipulated to search movies(Movies/Details/5), filter by genre(/movies/bygenre/comedy), or filter by year/month(/movies/released/2010/5).
+
 ---
 ## Testing
 
