@@ -3,10 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using MvcMovie.Models;
 using MvcMovie.Helpers;
-using MvcMovie.Services;
+using MvcMovie.Features.Movies.Models;
+using MvcMovie.Features.Movies.Services;
 
-namespace MvcMovie.Controllers
+namespace MvcMovie.Features.Movies.Controllers
 {
+    // /movies
+    [Route("movies")]
     public class MoviesController : Controller
     {
         private readonly IMovieService _movies;
@@ -20,12 +23,13 @@ namespace MvcMovie.Controllers
         }
 
         // GET: Movies
+        [HttpGet("")]
         public async Task<IActionResult> Index(string movieGenre, string searchString)
         {
             IEnumerable<Movie> all = await _movies.GetAllAsync();
             IEnumerable<Movie> movies = all;
             IEnumerable<string?> genreQuery = all.Select(movie => movie.Genre).Distinct();
-            if (!String.IsNullOrEmpty(searchString))
+            if (!string.IsNullOrEmpty(searchString))
             {
                 movies = movies.Where(s => s.Title!.ToUpper().Contains(searchString, StringComparison.OrdinalIgnoreCase));
                 _logger.Info("User searched for movies with letters: {searchString}", searchString);
@@ -53,6 +57,7 @@ namespace MvcMovie.Controllers
         }
 
         // GET: Movies/Details/5
+        [HttpGet("details/{id:int}", Name = "MovieDetails")]
         public async Task<IActionResult> Details(int id)
         {
             var movie = await _movies.GetByIdAsync(id);
@@ -61,6 +66,7 @@ namespace MvcMovie.Controllers
         }
 
         // GET: Movies/Create
+        [HttpGet("create")]
         public IActionResult Create()
         {
             _logger.Info("Accessed the Create Movie page.");
@@ -70,7 +76,7 @@ namespace MvcMovie.Controllers
         // POST: Movies/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
+        [HttpPost("create")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Title,ReleaseDate,Genre,Price,Rating")] Movie movie)
         {
@@ -90,6 +96,7 @@ namespace MvcMovie.Controllers
         }
 
         // GET: Movies/Edit/5
+        [HttpGet("edit/{id:int}")]
         public async Task<IActionResult> Edit(int id)
         {
             var movie = await _movies.GetByIdAsync(id);
@@ -100,7 +107,7 @@ namespace MvcMovie.Controllers
         // POST: Movies/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
+        [HttpPost("edit/{id:int}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Title,ReleaseDate,Genre,Price,Rating")] Movie movie)
         {
@@ -115,6 +122,7 @@ namespace MvcMovie.Controllers
         }
 
         // GET: Movies/Delete/5
+        [HttpGet("delete/{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
             var movie = await _movies.GetByIdAsync(id);
@@ -123,13 +131,46 @@ namespace MvcMovie.Controllers
         }
 
         // POST: Movies/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost("delete/{id:int}"), ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             await _movies.DeleteAsync(id);
             _logger.Info("Deleted movie with ID: {id}", id);
             return RedirectToAction(nameof(Index));
+        }
+
+        //Get: /movies/bygenre/comedy
+        [HttpGet("bygenre/{genre}")]
+        public async Task<IActionResult> ByGenre(string genre)
+        {
+            IEnumerable<Movie> all = await _movies.GetAllAsync();
+            IEnumerable<Movie> movies = all.Where(movie => movie.Genre != null && string.Equals(movie.Genre, genre, StringComparison.OrdinalIgnoreCase));
+            MovieGenreViewModel viewModel = new MovieGenreViewModel
+            {
+                Genres = new SelectList(all.Select(m => m.Genre).Distinct()),
+                Movies = movies.ToList(),
+                MovieGenre = genre
+            };
+            _logger.Info("User filtered movies by genre: {genre}", genre);
+
+            return View("Index", viewModel);
+        }
+
+        //GET: /movies/released/2010/5
+        [HttpGet("released/{year:int:min(1900)}/{month:int:range(1,12)?}")]
+        public async Task<IActionResult> Released(int year, int month)
+        {
+            IEnumerable<Movie> all = await _movies.GetAllAsync();
+            IEnumerable<Movie> movies = all.Where(movie => movie.ReleaseDate.Year == year && (month == 0 ? true : movie.ReleaseDate.Month == month);
+            MovieGenreViewModel viewModel = new MovieGenreViewModel
+            {
+                Genres = new SelectList(all.Select(m => m.Genre).Distinct()),
+                Movies = movies.ToList()
+            };
+            _logger.Info("User filtered movies released in Year: {year}, Month: {month}", year, month);
+
+            return View("Index", viewModel);
         }
     }
 }
